@@ -21,9 +21,9 @@ body:
 
       [Discussions]: https://www.alphagenomecommunity.com/
 
-      [issue search]: https://github.com/alphagenome/alphagenome/search?q=is%3Aissue&type=issues
+      [issue search]: https://github.com/google-deepmind/alphagenome/search?q=is%3Aissue&type=issues
 
-      [Raw report]: https://github.com/alphagenome/alphagenome/issues/new?template=none
+      [Raw report]: https://github.com/google-deepmind/alphagenome/issues/new?template=none
 - type: textarea
   attributes:
     label: Description
