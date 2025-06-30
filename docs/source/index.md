@@ -76,5 +76,6 @@ api/index
 tutorials/index
 user_guides/index
 faqs
+Community <https://www.alphagenomecommunity.com>
 references
 ```
