@@ -17,7 +17,7 @@
 import os
 
 
-def get_api_key(secret: str = 'ALPHAGENOME_API_KEY'):
+def get_api_key(secret: str = 'ALPHA_GENOME_API_KEY'):
   """Returns API key from environment variable or Colab secrets.
 
   Tries to retrieve the API key from the environment first. If not found,
@@ -51,7 +51,9 @@ def get_api_key(secret: str = 'ALPHAGENOME_API_KEY'):
       raise ValueError(
           f'Cannot find or access API key in Colab secrets with {secret=}. Make'
           ' sure you have added the API key to Colab secrets and enabled'
-          ' access.'
+          ' access. See'
+          ' https://www.alphagenomedocs.com/installation.html#add-api-key-to-secrets'
+          ' for more details.'
       ) from e
   except ImportError:
     # Not running in Colab.
