@@ -32,7 +32,8 @@ suited for smaller to medium-scale analyses such as analysing a limited number
 of genomic regions or variants requiring 1000s of predictions, but is likely not
 suitable for large scale analyses requiring more than 1 million predictions.
 Once you obtain your API key, you can easily get started by following our
-[Quick Start Guide](#quick-start).
+[Quick Start Guide](#quick-start), or watching our
+[AlphaGenome 101 tutorial](https://youtu.be/Xbvloe13nak).
 
 <a id='model_overview'>
 
