@@ -259,7 +259,7 @@ def _make_output(responses: Iterator[PredictResponse]) -> Output:
             response.output, responses
         )
       case 'tensor_chunk':
-        raise ValueError('Received tensor chunk before output proto!')
+        raise ValueError('Received tensor chunk before output proto.')
       case _:
         raise ValueError(
             f'Unsupported response type: {response.WhichOneof("payload")}'
@@ -286,7 +286,7 @@ def _make_variant_output(
             response.alternate_output, responses
         )
       case 'tensor_chunk':
-        raise ValueError('Received tensor chunk before output proto!')
+        raise ValueError('Received tensor chunk before output proto.')
       case _:
         raise ValueError(
             f'Unsupported response type: {response.WhichOneof("payload")}'
@@ -398,7 +398,7 @@ def _make_score_variant_output(
             )
         )
       case 'tensor_chunk':
-        raise ValueError('Received tensor chunk before output proto!')
+        raise ValueError('Received tensor chunk before output proto.')
       case _:
         raise ValueError(
             f'Unsupported response type: {response.WhichOneof("payload")}'
@@ -444,7 +444,7 @@ def _make_interval_output(
             )
         )
       case 'tensor_chunk':
-        raise ValueError('Received tensor chunk before output proto!')
+        raise ValueError('Received tensor chunk before output proto.')
       case _:
         raise ValueError(
             f'Unsupported response type: {response.WhichOneof("payload")}'
