@@ -224,6 +224,45 @@ def _make_output_data(
       )
 
 
+def construct_output_metadata(
+    responses: Iterator[dna_model_pb2.MetadataResponse],
+) -> OutputMetadata:
+  """Constructs an OutputMetadata from a stream of responses."""
+  metadata = {}
+  for response in responses:
+    for metadata_proto in response.output_metadata:
+      match metadata_proto.WhichOneof('payload'):
+        case 'tracks':
+          metadata[metadata_proto.output_type] = track_data.metadata_from_proto(
+              metadata_proto.tracks
+          )
+        case 'junctions':
+          metadata[metadata_proto.output_type] = (
+              junction_data.metadata_from_proto(metadata_proto.junctions)
+          )
+        case _:
+          raise ValueError(
+              'Unsupported metadata type:'
+              f' {metadata_proto.WhichOneof("payload")}'
+          )
+
+  return OutputMetadata(
+      atac=metadata.get(dna_model_pb2.OUTPUT_TYPE_ATAC),
+      cage=metadata.get(dna_model_pb2.OUTPUT_TYPE_CAGE),
+      dnase=metadata.get(dna_model_pb2.OUTPUT_TYPE_DNASE),
+      rna_seq=metadata.get(dna_model_pb2.OUTPUT_TYPE_RNA_SEQ),
+      chip_histone=metadata.get(dna_model_pb2.OUTPUT_TYPE_CHIP_HISTONE),
+      chip_tf=metadata.get(dna_model_pb2.OUTPUT_TYPE_CHIP_TF),
+      splice_sites=metadata.get(dna_model_pb2.OUTPUT_TYPE_SPLICE_SITES),
+      splice_site_usage=metadata.get(
+          dna_model_pb2.OUTPUT_TYPE_SPLICE_SITE_USAGE
+      ),
+      splice_junctions=metadata.get(dna_model_pb2.OUTPUT_TYPE_SPLICE_JUNCTIONS),
+      contact_maps=metadata.get(dna_model_pb2.OUTPUT_TYPE_CONTACT_MAPS),
+      procap=metadata.get(dna_model_pb2.OUTPUT_TYPE_PROCAP),
+  )
+
+
 def _construct_output(
     output_dict: Mapping[
         dna_model_pb2.OutputType,
@@ -1126,42 +1165,7 @@ class DnaClient:
     responses = dna_model_service_pb2_grpc.DnaModelServiceStub(
         self._channel
     ).GetMetadata(request, metadata=self._metadata)
-
-    metadata = {}
-    for response in responses:
-      for metadata_proto in response.output_metadata:
-        match metadata_proto.WhichOneof('payload'):
-          case 'tracks':
-            metadata[metadata_proto.output_type] = (
-                track_data.metadata_from_proto(metadata_proto.tracks)
-            )
-          case 'junctions':
-            metadata[metadata_proto.output_type] = (
-                junction_data.metadata_from_proto(metadata_proto.junctions)
-            )
-          case _:
-            raise ValueError(
-                'Unsupported metadata type:'
-                f' {metadata_proto.WhichOneof("payload")}'
-            )
-
-    return OutputMetadata(
-        atac=metadata.get(dna_model_pb2.OUTPUT_TYPE_ATAC),
-        cage=metadata.get(dna_model_pb2.OUTPUT_TYPE_CAGE),
-        dnase=metadata.get(dna_model_pb2.OUTPUT_TYPE_DNASE),
-        rna_seq=metadata.get(dna_model_pb2.OUTPUT_TYPE_RNA_SEQ),
-        chip_histone=metadata.get(dna_model_pb2.OUTPUT_TYPE_CHIP_HISTONE),
-        chip_tf=metadata.get(dna_model_pb2.OUTPUT_TYPE_CHIP_TF),
-        splice_sites=metadata.get(dna_model_pb2.OUTPUT_TYPE_SPLICE_SITES),
-        splice_site_usage=metadata.get(
-            dna_model_pb2.OUTPUT_TYPE_SPLICE_SITE_USAGE
-        ),
-        splice_junctions=metadata.get(
-            dna_model_pb2.OUTPUT_TYPE_SPLICE_JUNCTIONS
-        ),
-        contact_maps=metadata.get(dna_model_pb2.OUTPUT_TYPE_CONTACT_MAPS),
-        procap=metadata.get(dna_model_pb2.OUTPUT_TYPE_PROCAP),
-    )
+    return construct_output_metadata(responses)
 
 
 def create(
