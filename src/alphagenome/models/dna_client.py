@@ -136,8 +136,8 @@ class ModelVersion(enum.Enum):
   A model version that is designated FOLD_#, where # is an integer from 0 to 3,
   indicates that the model was trained with that particular fold held out.
 
-  The ALL_FOLDS version indicates that the model was trained on all folds, with
-  none held out.
+  The ALL_FOLDS version refers to the distilled model that was trained on
+  an ensemble of teacher models trained on all folds.
   """
 
   ALL_FOLDS = enum.auto()  # Default model version if None explicitly set.
@@ -529,7 +529,8 @@ class DnaClient:
   Attributes:
     channel: gRPC channel to the DNA model server.
     metadata: Metadata to send with each request.
-    model_version: Optional model version to use for the DNA model server.
+    model_version: Optional model version to use for the DNA model server. If
+      none provided, the default model version will be used.
   """
 
   def __init__(
@@ -1175,11 +1176,12 @@ def create(
     timeout: float | None = None,
     address: str | None = None,
 ) -> DnaClient:
-  """Creates a client from an API key.
+  """Creates a model client for a given API key.
 
   Args:
     api_key: API key to use for authentication.
-    model_version: Optional model version to use for the DNA model server.
+    model_version: Optional model version to use for the DNA model server. If
+      none is provided, the default model will be used.
     timeout: Optional timeout for waiting for the channel to be ready.
     address: Optional server address to connect to.
 

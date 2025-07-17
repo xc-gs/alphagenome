@@ -13,6 +13,7 @@ AlphaGenome client and variant scorers.
 .. autosummary::
     :toctree: generated
 
+    models.dna_client.create
     models.dna_client.ModelVersion
     models.dna_client.Organism
     models.dna_client.validate_sequence_length
