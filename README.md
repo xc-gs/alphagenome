@@ -62,7 +62,7 @@ documentation. For support and feedback:
 ## Quick start
 
 The quickest way to get started is to run our example notebooks in
-[Google Colab](https://colab.research.google.com/). Here are some some starter
+[Google Colab](https://colab.research.google.com/). Here are some starter
 notebooks:
 
 -   [Quick start](https://colab.research.google.com/github/google-deepmind/alphagenome/blob/main/colabs/quick_start.ipynb):
