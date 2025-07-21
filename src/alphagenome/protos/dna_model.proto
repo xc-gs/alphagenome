@@ -732,6 +732,11 @@ enum AggregationType {
   // i.e., l2_norm(ALT - REF).
   AGGREGATION_TYPE_L2_DIFF = 4;
 
+  // Log scales the predictions + 1, takes the difference of `ALT` and `REF`
+  // predictions, then computes the L2 norm, i.e., l2_norm(log1p(`ALT`) -
+  // log1p(`REF`)).
+  AGGREGATION_TYPE_L2_DIFF_LOG1P = 8;
+
   // Takes the sum of predictions, applies a log transform, then takes the
   // difference between predictions, i.e., log2(sum(ALT)) - log2(sum(REF)).
   AGGREGATION_TYPE_DIFF_LOG2_SUM = 5;

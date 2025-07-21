@@ -32,6 +32,7 @@ class VariantScorersTest(parameterized.TestCase):
         dna_model_pb2.AggregationType.AGGREGATION_TYPE_DIFF_SUM_LOG2,
         dna_model_pb2.AggregationType.AGGREGATION_TYPE_DIFF_LOG2_SUM,
         dna_model_pb2.AggregationType.AGGREGATION_TYPE_L2_DIFF,
+        dna_model_pb2.AggregationType.AGGREGATION_TYPE_L2_DIFF_LOG1P,
         dna_model_pb2.AggregationType.AGGREGATION_TYPE_ACTIVE_MEAN,
         dna_model_pb2.AggregationType.AGGREGATION_TYPE_ACTIVE_SUM,
     ]

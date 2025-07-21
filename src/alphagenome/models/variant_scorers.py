@@ -41,6 +41,9 @@ class AggregationType(enum.Enum):
       log2(sum(`REF`)).
     L2_DIFF: Takes the difference of `ALT` and `REF` predictions, then computes
       the L2 norm, i.e., l2_norm(`ALT` - `REF`).
+    L2_DIFF_LOG1P: Log scales the predictions + 1, takes the difference of `ALT`
+      and `REF` predictions, then computes the L2 norm, i.e.,
+      l2_norm(log1p(`ALT`) - log1p(`REF`)).
     ACTIVE_MEAN: Maximum of means, i.e., max(mean(`ALT`), mean(`REF`)).
     ACTIVE_SUM: Maximum of sums, i.e., max(sum(`ALT), sum(`REF`)).
 
@@ -53,6 +56,7 @@ class AggregationType(enum.Enum):
   DIFF_SUM_LOG2 = dna_model_pb2.AggregationType.AGGREGATION_TYPE_DIFF_SUM_LOG2
   DIFF_LOG2_SUM = dna_model_pb2.AggregationType.AGGREGATION_TYPE_DIFF_LOG2_SUM
   L2_DIFF = dna_model_pb2.AggregationType.AGGREGATION_TYPE_L2_DIFF
+  L2_DIFF_LOG1P = dna_model_pb2.AggregationType.AGGREGATION_TYPE_L2_DIFF_LOG1P
   ACTIVE_MEAN = dna_model_pb2.AggregationType.AGGREGATION_TYPE_ACTIVE_MEAN
   ACTIVE_SUM = dna_model_pb2.AggregationType.AGGREGATION_TYPE_ACTIVE_SUM
 
@@ -145,6 +149,7 @@ SUPPORTED_AGGREGATIONS = immutabledict.immutabledict({
         AggregationType.DIFF_SUM_LOG2,
         AggregationType.DIFF_LOG2_SUM,
         AggregationType.L2_DIFF,
+        AggregationType.L2_DIFF_LOG1P,
         AggregationType.ACTIVE_MEAN,
         AggregationType.ACTIVE_SUM,
     ],
