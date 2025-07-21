@@ -745,6 +745,17 @@ class VariantTest(parameterized.TestCase):
         v.split(6), (genome.Variant('chr1', 3, 'TGTC', 'AC'), None)
     )
 
+  @parameterized.parameters(
+      ('A', 'C', True),
+      ('AC', 'A', False),
+      ('A', 'AC', False),
+      ('AC', 'GT', False),
+      ('', 'A', False),
+  )
+  def test_is_snv(self, ref, alt, expected):
+    v = genome.Variant('chr1', 10, ref, alt)
+    self.assertEqual(v.is_snv, expected)
+
 
 class JunctionTest(parameterized.TestCase):
 

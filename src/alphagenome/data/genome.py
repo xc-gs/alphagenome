@@ -738,6 +738,11 @@ class Variant:
         )
     )
 
+  @property
+  def is_snv(self) -> bool:
+    """Return if the variant is a Single Nucleotide Variant (SNV)."""
+    return len(self.reference_bases) == 1 and len(self.alternate_bases) == 1
+
   def copy(self) -> Self:
     """Returns a deep copy of the variant."""
     return copy.deepcopy(self)
