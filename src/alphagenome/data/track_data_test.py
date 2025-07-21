@@ -73,6 +73,7 @@ class TrackDataInitTest(parameterized.TestCase):
       include_endedness=[True, False],
       include_genetically_modified=[True, False],
       include_data_source=[True, False],
+      include_nonzero_mean=[True, False],
       override_interval=[True, False],
   )
   def test_proto_roundtrip(
@@ -89,6 +90,7 @@ class TrackDataInitTest(parameterized.TestCase):
       include_endedness: bool,
       include_genetically_modified: bool,
       include_data_source: bool,
+      include_nonzero_mean: bool,
       override_interval: bool,
   ):
     df = pd.DataFrame({
@@ -186,6 +188,8 @@ class TrackDataInitTest(parameterized.TestCase):
           False,
           None,
       ]
+    if include_nonzero_mean:
+      df['nonzero_mean'] = [1.1, None, 1.1, 1.1, 1.1, 0.6, None]
 
     values = np.array(
         [

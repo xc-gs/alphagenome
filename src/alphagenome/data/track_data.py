@@ -899,6 +899,7 @@ def metadata_to_proto(
       metadata.get('data_source', default_values),
       metadata.get('genetically_modified', default_values),
       metadata.get('endedness', default_values),
+      metadata.get('nonzero_mean', default_values),
       strict=True,
   )
 
@@ -917,6 +918,7 @@ def metadata_to_proto(
       data_source,
       genetically_modified,
       endedness,
+      nonzero_mean,
   ) in columns:
     if biosample_type:
       biosample = dna_model_pb2.Biosample(
@@ -958,6 +960,7 @@ def metadata_to_proto(
             data_source=data_source,
             genetically_modified=genetically_modified,
             endedness=endedness,
+            nonzero_mean=nonzero_mean,
         )
     )
 
@@ -1023,6 +1026,9 @@ def metadata_from_proto(
 
     if track_proto.HasField('genetically_modified'):
       track_metadata['genetically_modified'] = track_proto.genetically_modified
+
+    if track_proto.HasField('nonzero_mean'):
+      track_metadata['nonzero_mean'] = track_proto.nonzero_mean
 
     metadata.append(track_metadata)
   if metadata:

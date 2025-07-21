@@ -132,6 +132,9 @@ message TrackMetadata {
 
   // Optional boolean indicating whether the track is genetically modified.
   optional bool genetically_modified = 13;
+
+  // Optional mean of the non-zero values in the track.
+  optional float nonzero_mean = 14;
 }
 
 // Container for TrackMetadata.
