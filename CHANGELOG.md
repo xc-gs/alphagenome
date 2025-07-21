@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0]
+
+### Added
+
+-   Add `L2_DIFF_LOG1P` variant scoring aggregation type.
+-   Add `is_snv` property to `Variant`.
+-   Add non-zero mean track metadata field to model output metadata.
+-   Add optional interval argument to `predict_sequence`.
+
 ## [0.0.2]
 
 ### Added
