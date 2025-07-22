@@ -31,6 +31,7 @@ from alphagenome.models import dna_client
 from alphagenome.models import interval_scorers
 from alphagenome.models import variant_scorers
 from alphagenome.protos import dna_model_pb2
+from alphagenome.protos import dna_model_service_pb2
 from alphagenome.protos import dna_model_service_pb2_grpc
 import anndata
 import grpc
@@ -90,14 +91,14 @@ def _generate_variant_protos(
     if prediction is not None:
       if isinstance(prediction, track_data.TrackData):
         proto, chunks = prediction.to_protos(bytes_per_chunk=bytes_per_chunk)
-        yield dna_model_pb2.PredictVariantResponse(
+        yield dna_model_service_pb2.PredictVariantResponse(
             reference_output=dna_model_pb2.Output(
                 output_type=output_type, track_data=proto
             )
         )
       elif isinstance(prediction, junction_data.JunctionData):
         proto, chunks = prediction.to_protos(bytes_per_chunk=bytes_per_chunk)
-        yield dna_model_pb2.PredictVariantResponse(
+        yield dna_model_service_pb2.PredictVariantResponse(
             reference_output=dna_model_pb2.Output(
                 output_type=output_type, junction_data=proto
             )
@@ -106,21 +107,21 @@ def _generate_variant_protos(
         raise ValueError(f'Unsupported prediction type: {type(prediction)}')
 
       for chunk in chunks:
-        yield dna_model_pb2.PredictVariantResponse(tensor_chunk=chunk)
+        yield dna_model_service_pb2.PredictVariantResponse(tensor_chunk=chunk)
 
   for output_type in requested_outputs:
     prediction = predictions.alternate.get(dna_client.OutputType(output_type))
     if prediction is not None:
       if isinstance(prediction, track_data.TrackData):
         proto, chunks = prediction.to_protos(bytes_per_chunk=bytes_per_chunk)
-        yield dna_model_pb2.PredictVariantResponse(
+        yield dna_model_service_pb2.PredictVariantResponse(
             alternate_output=dna_model_pb2.Output(
                 output_type=output_type, track_data=proto
             )
         )
       elif isinstance(prediction, junction_data.JunctionData):
         proto, chunks = prediction.to_protos(bytes_per_chunk=bytes_per_chunk)
-        yield dna_model_pb2.PredictVariantResponse(
+        yield dna_model_service_pb2.PredictVariantResponse(
             alternate_output=dna_model_pb2.Output(
                 output_type=output_type, junction_data=proto
             )
@@ -129,7 +130,7 @@ def _generate_variant_protos(
         raise ValueError(f'Unsupported prediction type: {type(prediction)}')
 
       for chunk in chunks:
-        yield dna_model_pb2.PredictVariantResponse(tensor_chunk=chunk)
+        yield dna_model_service_pb2.PredictVariantResponse(tensor_chunk=chunk)
 
 
 def _generate_variant_scoring_protos(
@@ -471,7 +472,7 @@ class ClientTest(parameterized.TestCase):
         sequence_length=sequence_length
     )
 
-    expected_request = dna_model_pb2.PredictSequenceRequest(
+    expected_request = dna_model_service_pb2.PredictSequenceRequest(
         sequence='A' * sequence_length,
         organism=dna_model_pb2.ORGANISM_HOMO_SAPIENS,
         requested_outputs=[o.to_proto() for o in requested_output_types],
@@ -503,7 +504,7 @@ class ClientTest(parameterized.TestCase):
             mock_predictions,
             request.requested_outputs,
             bytes_per_chunk,
-            dna_model_pb2.PredictSequenceResponse,
+            dna_model_service_pb2.PredictSequenceResponse,
         )
 
     mock_channel, mock_stream = _create_mock_channel_and_stream(_mock_generate)
@@ -552,7 +553,7 @@ class ClientTest(parameterized.TestCase):
             mock_predictions,
             request.requested_outputs,
             bytes_per_chunk,
-            dna_model_pb2.PredictSequenceResponse,
+            dna_model_service_pb2.PredictSequenceResponse,
         )
 
     mock_channel, mock_stream = _create_mock_channel_and_stream(_mock_generate)
@@ -641,7 +642,7 @@ class ClientTest(parameterized.TestCase):
             mock_predictions,
             request.requested_outputs,
             bytes_per_chunk,
-            dna_model_pb2.PredictIntervalResponse,
+            dna_model_service_pb2.PredictIntervalResponse,
         )
 
     mock_channel, mock_stream = _create_mock_channel_and_stream(_mock_generate)
@@ -685,7 +686,7 @@ class ClientTest(parameterized.TestCase):
             examples[(request.interval.start, request.interval.end)],
             request.requested_outputs,
             bytes_per_chunk,
-            dna_model_pb2.PredictIntervalResponse,
+            dna_model_service_pb2.PredictIntervalResponse,
         )
 
     mock_channel, mock_stream = _create_mock_channel_and_stream(_mock_generate)
@@ -891,7 +892,7 @@ class ClientTest(parameterized.TestCase):
     def _mock_generate(requests, metadata):
       del metadata
       del requests
-      yield dna_model_pb2.MetadataResponse(
+      yield dna_model_service_pb2.MetadataResponse(
           output_metadata=[
               dna_model_pb2.OutputMetadata(
                   output_type=dna_model_pb2.OUTPUT_TYPE_ATAC,
@@ -1052,7 +1053,7 @@ class ClientTest(parameterized.TestCase):
         yield from _generate_interval_scoring_protos(
             scores=expected,
             bytes_per_chunk=bytes_per_chunk,
-            response_proto_type=dna_model_pb2.ScoreIntervalResponse,
+            response_proto_type=dna_model_service_pb2.ScoreIntervalResponse,
             interval=genome.Interval.from_proto(request.interval),
         )
 
@@ -1083,7 +1084,7 @@ class ClientTest(parameterized.TestCase):
                 for _ in range(len(request.interval_scorers))
             ],
             bytes_per_chunk=1024,
-            response_proto_type=dna_model_pb2.ScoreIntervalResponse,
+            response_proto_type=dna_model_service_pb2.ScoreIntervalResponse,
             interval=genome.Interval.from_proto(request.interval),
         )
 
@@ -1245,7 +1246,7 @@ class ClientTest(parameterized.TestCase):
         yield from _generate_interval_scoring_protos(
             scores=expected,
             bytes_per_chunk=bytes_per_chunk,
-            response_proto_type=dna_model_pb2.ScoreIntervalResponse,
+            response_proto_type=dna_model_service_pb2.ScoreIntervalResponse,
             interval=genome.Interval.from_proto(request.interval),
         )
 
@@ -1381,7 +1382,7 @@ class ClientTest(parameterized.TestCase):
         yield from _generate_variant_scoring_protos(
             scores=expected,
             bytes_per_chunk=bytes_per_chunk,
-            response_proto_type=dna_model_pb2.ScoreVariantResponse,
+            response_proto_type=dna_model_service_pb2.ScoreVariantResponse,
             variant=genome.Variant.from_proto(request.variant),
         )
 
@@ -1471,7 +1472,7 @@ class ClientTest(parameterized.TestCase):
                 for _ in range(len(request.variant_scorers))
             ],
             bytes_per_chunk=1024,
-            response_proto_type=dna_model_pb2.ScoreVariantResponse,
+            response_proto_type=dna_model_service_pb2.ScoreVariantResponse,
             variant=genome.Variant.from_proto(request.variant),
         )
 
@@ -1600,7 +1601,7 @@ class ClientTest(parameterized.TestCase):
         yield from _generate_variant_scoring_protos(
             scores=position_to_expected_scores[request.variant.position],
             bytes_per_chunk=bytes_per_chunk,
-            response_proto_type=dna_model_pb2.ScoreVariantResponse,
+            response_proto_type=dna_model_service_pb2.ScoreVariantResponse,
             variant=genome.Variant.from_proto(request.variant),
         )
 
@@ -1767,7 +1768,7 @@ class ClientTest(parameterized.TestCase):
           yield from _generate_variant_scoring_protos(
               scores=example_scores,
               bytes_per_chunk=bytes_per_chunk,
-              response_proto_type=dna_model_pb2.ScoreIsmVariantResponse,
+              response_proto_type=dna_model_service_pb2.ScoreIsmVariantResponse,
               variant=variant,
           )
 
@@ -1824,7 +1825,7 @@ class ClientTest(parameterized.TestCase):
             ),
             request.requested_outputs,
             bytes_per_chunk=128,
-            response_proto_type=dna_model_pb2.PredictSequenceResponse,
+            response_proto_type=dna_model_service_pb2.PredictSequenceResponse,
         ):
           if response.WhichOneof('payload') != 'tensor_chunk':
             yield response
@@ -1856,7 +1857,7 @@ class ClientTest(parameterized.TestCase):
             ),
             request.requested_outputs,
             bytes_per_chunk=128,
-            response_proto_type=dna_model_pb2.PredictSequenceResponse,
+            response_proto_type=dna_model_service_pb2.PredictSequenceResponse,
         ):
           if response.WhichOneof('payload') != 'tensor_chunk':
             yield response
@@ -1936,7 +1937,7 @@ class RpcRetryTest(parameterized.TestCase):
     def function(channel: grpc.Channel):
       return dna_model_service_pb2_grpc.DnaModelServiceStub(
           channel
-      ).PredictSequence(iter([dna_model_pb2.PredictSequenceRequest()]))
+      ).PredictSequence(iter([dna_model_service_pb2.PredictSequenceRequest()]))
 
     with self.assertRaises(grpc.RpcError):
       _ = function(mock_channel)

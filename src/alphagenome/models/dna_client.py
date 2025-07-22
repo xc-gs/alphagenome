@@ -31,6 +31,7 @@ from alphagenome.models import dna_output
 from alphagenome.models import interval_scorers as interval_scorers_lib
 from alphagenome.models import variant_scorers as variant_scorers_lib
 from alphagenome.protos import dna_model_pb2
+from alphagenome.protos import dna_model_service_pb2
 from alphagenome.protos import dna_model_service_pb2_grpc
 from alphagenome.protos import tensor_pb2
 import anndata
@@ -165,17 +166,17 @@ class Organism(enum.Enum):
 
 PredictResponse = TypeVar(
     'PredictResponse',
-    dna_model_pb2.PredictSequenceResponse,
-    dna_model_pb2.PredictIntervalResponse,
+    dna_model_service_pb2.PredictSequenceResponse,
+    dna_model_service_pb2.PredictIntervalResponse,
 )
 
 
 def _read_tensor_chunks(
     responses: Iterator[
         PredictResponse
-        | dna_model_pb2.PredictVariantResponse
-        | dna_model_pb2.ScoreVariantResponse
-        | dna_model_pb2.ScoreIntervalResponse
+        | dna_model_service_pb2.PredictVariantResponse
+        | dna_model_service_pb2.ScoreVariantResponse
+        | dna_model_service_pb2.ScoreIntervalResponse
     ],
     chunk_count: int,
 ) -> Iterable[tensor_pb2.TensorChunk]:
@@ -195,7 +196,9 @@ def _read_tensor_chunks(
 
 def _make_output_data(
     output: dna_model_pb2.Output,
-    responses: Iterator[PredictResponse | dna_model_pb2.PredictVariantResponse],
+    responses: Iterator[
+        PredictResponse | dna_model_service_pb2.PredictVariantResponse
+    ],
     interval: genome.Interval | None = None,
 ) -> track_data.TrackData | np.ndarray | junction_data.JunctionData:
   """Helper to create an output data object from an output proto."""
@@ -225,7 +228,7 @@ def _make_output_data(
 
 
 def construct_output_metadata(
-    responses: Iterator[dna_model_pb2.MetadataResponse],
+    responses: Iterator[dna_model_service_pb2.MetadataResponse],
 ) -> OutputMetadata:
   """Constructs an OutputMetadata from a stream of responses."""
   metadata = {}
@@ -315,7 +318,7 @@ def _make_output(
 
 
 def _make_variant_output(
-    responses: Iterator[dna_model_pb2.PredictVariantResponse],
+    responses: Iterator[dna_model_service_pb2.PredictVariantResponse],
 ) -> VariantOutput:
   """Helper to load an Output dataclass from a stream of response protos."""
   ref_outputs = {}
@@ -402,8 +405,8 @@ def _construct_anndata_from_proto(
 def _construct_score_variant(
     output: dna_model_pb2.ScoreVariantOutput,
     responses: Iterator[
-        dna_model_pb2.ScoreVariantResponse
-        | dna_model_pb2.ScoreIsmVariantResponse
+        dna_model_service_pb2.ScoreVariantResponse
+        | dna_model_service_pb2.ScoreIsmVariantResponse
     ],
     interval: genome.Interval,
 ) -> anndata.AnnData:
@@ -427,8 +430,8 @@ def _construct_score_variant(
 
 def _make_score_variant_output(
     responses: Iterator[
-        dna_model_pb2.ScoreVariantResponse
-        | dna_model_pb2.ScoreIsmVariantResponse
+        dna_model_service_pb2.ScoreVariantResponse
+        | dna_model_service_pb2.ScoreIsmVariantResponse
     ],
     interval: genome.Interval,
 ) -> list[anndata.AnnData]:
@@ -454,7 +457,7 @@ def _make_score_variant_output(
 
 def _construct_score_interval(
     output: dna_model_pb2.ScoreIntervalOutput,
-    responses: Iterator[dna_model_pb2.ScoreIntervalResponse],
+    responses: Iterator[dna_model_service_pb2.ScoreIntervalResponse],
     interval: genome.Interval,
 ) -> anndata.AnnData:
   """Returns `AnnData` of interval scores from a ScoreIntervalOutput proto."""
@@ -473,7 +476,7 @@ def _construct_score_interval(
 
 
 def _make_interval_output(
-    responses: Iterator[dna_model_pb2.ScoreIntervalResponse],
+    responses: Iterator[dna_model_service_pb2.ScoreIntervalResponse],
     interval: genome.Interval,
 ) -> list[anndata.AnnData]:
   """Returns a list of `AnnData` interval scores from a stream of responses."""
@@ -581,7 +584,7 @@ class DnaClient:
       )
     validate_sequence_length(len(sequence))
     requested_outputs = [o.to_proto() for o in dict.fromkeys(requested_outputs)]
-    request = dna_model_pb2.PredictSequenceRequest(
+    request = dna_model_service_pb2.PredictSequenceRequest(
         sequence=sequence,
         organism=organism.to_proto(),
         ontology_terms=_convert_ontologies_to_protos(ontology_terms),
@@ -674,7 +677,7 @@ class DnaClient:
     """
     validate_sequence_length(interval.width)
     requested_outputs = [o.to_proto() for o in dict.fromkeys(requested_outputs)]
-    request = dna_model_pb2.PredictIntervalRequest(
+    request = dna_model_service_pb2.PredictIntervalRequest(
         interval=interval.to_proto(),
         organism=organism.to_proto(),
         ontology_terms=_convert_ontologies_to_protos(ontology_terms),
@@ -762,7 +765,7 @@ class DnaClient:
     """
     validate_sequence_length(interval.width)
     requested_outputs = [o.to_proto() for o in dict.fromkeys(requested_outputs)]
-    request = dna_model_pb2.PredictVariantRequest(
+    request = dna_model_service_pb2.PredictVariantRequest(
         interval=interval.to_proto(),
         variant=variant.to_proto(),
         organism=organism.to_proto(),
@@ -875,7 +878,7 @@ class DnaClient:
         for scorer in interval_scorers
     ):
       raise ValueError('Interval scorers must have widths <= interval width.')
-    request = dna_model_pb2.ScoreIntervalRequest(
+    request = dna_model_service_pb2.ScoreIntervalRequest(
         interval=interval.to_proto(),
         interval_scorers=[scorer.to_proto() for scorer in interval_scorers],
         organism=organism.to_proto(),
@@ -989,7 +992,7 @@ class DnaClient:
           'Too many variant scorers requested, '
           f'maximum allowed: {MAX_VARIANT_SCORERS_PER_REQUEST}.'
       )
-    request = dna_model_pb2.ScoreVariantRequest(
+    request = dna_model_service_pb2.ScoreVariantRequest(
         interval=interval.to_proto(),
         variant=variant.to_proto(),
         organism=organism.to_proto(),
@@ -1114,7 +1117,7 @@ class DnaClient:
     def _score_ism_variant(
         ism_interval: genome.Interval,
     ) -> list[anndata.AnnData]:
-      request = dna_model_pb2.ScoreIsmVariantRequest(
+      request = dna_model_service_pb2.ScoreIsmVariantRequest(
           interval=interval.to_proto(),
           ism_interval=ism_interval.to_proto(),
           organism=organism.to_proto(),
@@ -1162,7 +1165,9 @@ class DnaClient:
     Returns:
       OutputMetadata for the provided organism.
     """
-    request = dna_model_pb2.MetadataRequest(organism=organism.to_proto())
+    request = dna_model_service_pb2.MetadataRequest(
+        organism=organism.to_proto()
+    )
     responses = dna_model_service_pb2_grpc.DnaModelServiceStub(
         self._channel
     ).GetMetadata(request, metadata=self._metadata)
