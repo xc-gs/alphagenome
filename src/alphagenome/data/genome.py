@@ -743,6 +743,16 @@ class Variant:
     """Return if the variant is a Single Nucleotide Variant (SNV)."""
     return len(self.reference_bases) == 1 and len(self.alternate_bases) == 1
 
+  @property
+  def is_deletion(self) -> bool:
+    """Return if the variant is a deletion."""
+    return len(self.reference_bases) > len(self.alternate_bases)
+
+  @property
+  def is_insertion(self) -> bool:
+    """Return if the variant is an insertion."""
+    return len(self.reference_bases) < len(self.alternate_bases)
+
   def copy(self) -> Self:
     """Returns a deep copy of the variant."""
     return copy.deepcopy(self)

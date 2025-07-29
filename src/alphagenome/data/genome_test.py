@@ -756,6 +756,29 @@ class VariantTest(parameterized.TestCase):
     v = genome.Variant('chr1', 10, ref, alt)
     self.assertEqual(v.is_snv, expected)
 
+  @parameterized.parameters(
+      ('A', 'C', False),
+      ('AC', 'A', True),
+      ('A', 'AC', False),
+      ('AC', 'GT', False),
+      ('', 'A', False),
+      ('A', '', True),
+  )
+  def test_is_deletion(self, ref, alt, expected):
+    v = genome.Variant('chr1', 10, ref, alt)
+    self.assertEqual(v.is_deletion, expected)
+
+  @parameterized.parameters(
+      ('A', 'C', False),
+      ('AC', 'A', False),
+      ('A', 'AC', True),
+      ('AC', 'GT', False),
+      ('', 'A', True),
+  )
+  def test_is_insertion(self, ref, alt, expected):
+    v = genome.Variant('chr1', 10, ref, alt)
+    self.assertEqual(v.is_insertion, expected)
+
 
 class JunctionTest(parameterized.TestCase):
 
