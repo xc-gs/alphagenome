@@ -27,6 +27,7 @@ from alphagenome.data import genome
 from alphagenome.data import junction_data
 from alphagenome.data import ontology
 from alphagenome.data import track_data
+from alphagenome.models import dna_model
 from alphagenome.models import dna_output
 from alphagenome.models import interval_scorers as interval_scorers_lib
 from alphagenome.models import variant_scorers as variant_scorers_lib
@@ -64,9 +65,6 @@ MAX_ISM_INTERVAL_WIDTH = 10
 
 # Maximum number of variant scorers per request.
 MAX_VARIANT_SCORERS_PER_REQUEST = 20
-
-# Default maximum number of workers to use for parallel requests.
-_DEFAULT_MAX_WORKERS = 5
 
 _VALID_SEQUENCE_CHARACTERS = frozenset('ACGTN')
 
@@ -152,17 +150,7 @@ Output = dna_output.Output
 OutputMetadata = dna_output.OutputMetadata
 OutputType = dna_output.OutputType
 VariantOutput = dna_output.VariantOutput
-
-
-class Organism(enum.Enum):
-  """Enumeration of all the available organisms."""
-
-  HOMO_SAPIENS = dna_model_pb2.ORGANISM_HOMO_SAPIENS
-  MUS_MUSCULUS = dna_model_pb2.ORGANISM_MUS_MUSCULUS
-
-  def to_proto(self) -> dna_model_pb2.Organism:
-    return self.value
-
+Organism = dna_model.Organism
 
 PredictResponse = TypeVar(
     'PredictResponse',
@@ -526,7 +514,7 @@ def validate_sequence_length(length: int):
     )
 
 
-class DnaClient:
+class DnaClient(dna_model.DnaModel):
   """Client for interacting with a DNA model server.
 
   Attributes:
@@ -596,63 +584,6 @@ class DnaClient:
     ).PredictSequence(iter([request]), metadata=self._metadata)
     return _make_output(responses, interval=interval)
 
-  def predict_sequences(
-      self,
-      sequences: Sequence[str],
-      *,
-      organism: Organism = Organism.HOMO_SAPIENS,
-      requested_outputs: Iterable[OutputType],
-      ontology_terms: Iterable[ontology.OntologyTerm | str] | None,
-      progress_bar: bool = True,
-      max_workers: int = _DEFAULT_MAX_WORKERS,
-      intervals: Sequence[genome.Interval] | None = None,
-  ) -> list[Output]:
-    """Generate predictions for a given DNA sequence.
-
-    Args:
-      sequences: DNA sequences to make predictions for.
-      organism: Organism to use for the prediction.
-      requested_outputs: Iterable of OutputTypes indicating which subsets of
-        predictions to return.
-      ontology_terms: Iterable of ontology terms or curies to generate
-        predictions for. If None returns all ontologies.
-      progress_bar: If True, show a progress bar.
-      max_workers: Number of parallel workers to use.
-      intervals: Optional intervals from which the sequences were derived. This
-        is used as the interval in the output TrackData. Must be the same length
-        as `sequences` if provided.
-
-    Returns:
-      Outputs for the provided DNA sequences.
-    """
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers
-    ) as executor:
-      futures = [
-          executor.submit(
-              self.predict_sequence,
-              sequence=sequence,
-              organism=organism,
-              ontology_terms=ontology_terms,
-              requested_outputs=requested_outputs,
-              interval=interval,
-          )
-          for sequence, interval in zip(
-              sequences, intervals or [None] * len(sequences), strict=True
-          )
-      ]
-      futures_as_completed = tqdm.auto.tqdm(
-          concurrent.futures.as_completed(futures),
-          total=len(futures),
-          disable=not progress_bar,
-      )
-      for future in futures_as_completed:
-        if (exception := future.exception()) is not None:
-          executor.shutdown(wait=False, cancel_futures=True)
-          raise exception
-
-      return [future.result() for future in futures]
-
   @retry_rpc
   def predict_interval(
       self,
@@ -688,56 +619,6 @@ class DnaClient:
         self._channel
     ).PredictInterval(iter([request]), metadata=self._metadata)
     return _make_output(responses)
-
-  def predict_intervals(
-      self,
-      intervals: Sequence[genome.Interval],
-      *,
-      organism: Organism = Organism.HOMO_SAPIENS,
-      requested_outputs: Iterable[OutputType],
-      ontology_terms: Iterable[ontology.OntologyTerm | str] | None,
-      progress_bar: bool = True,
-      max_workers: int = _DEFAULT_MAX_WORKERS,
-  ) -> list[Output]:
-    """Generate predictions for a sequence of DNA intervals.
-
-    Args:
-      intervals: DNA intervals to make predictions for.
-      organism: Organism to use for the predictions.
-      requested_outputs: Iterable of OutputTypes indicating which subsets of
-        predictions to return.
-      ontology_terms: Iterable of ontology terms or curies to generate
-        predictions for. If None returns all ontologies.
-      progress_bar: If True, show a progress bar.
-      max_workers: Number of parallel workers to use.
-
-    Returns:
-      Outputs for the provided DNA intervals.
-    """
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers
-    ) as executor:
-      futures = [
-          executor.submit(
-              self.predict_interval,
-              interval=interval,
-              organism=organism,
-              ontology_terms=ontology_terms,
-              requested_outputs=requested_outputs,
-          )
-          for interval in intervals
-      ]
-      futures_as_completed = tqdm.auto.tqdm(
-          concurrent.futures.as_completed(futures),
-          total=len(futures),
-          disable=not progress_bar,
-      )
-      for future in futures_as_completed:
-        if (exception := future.exception()) is not None:
-          executor.shutdown(wait=False, cancel_futures=True)
-          raise exception
-
-      return [future.result() for future in futures]
 
   @retry_rpc
   def predict_variant(
@@ -777,66 +658,6 @@ class DnaClient:
         self._channel
     ).PredictVariant(iter([request]), metadata=self._metadata)
     return _make_variant_output(responses)
-
-  def predict_variants(
-      self,
-      intervals: genome.Interval | Sequence[genome.Interval],
-      variants: Sequence[genome.Variant],
-      *,
-      organism: Organism = Organism.HOMO_SAPIENS,
-      requested_outputs: Iterable[OutputType],
-      ontology_terms: Iterable[ontology.OntologyTerm | str] | None,
-      progress_bar: bool = True,
-      max_workers: int = _DEFAULT_MAX_WORKERS,
-  ) -> list[VariantOutput]:
-    """Generate predictions for a given DNA variant.
-
-    Args:
-      intervals: DNA interval(s) to make predictions for.
-      variants: DNA variants to make prediction for.
-      organism: Organism to use for the prediction.
-      requested_outputs: Iterable of OutputTypes indicating which subsets of
-        predictions to return.
-      ontology_terms: Iterable of ontology terms or curies to generate
-        predictions for. If None returns all ontologies.
-      progress_bar: If True, show a progress bar.
-      max_workers: Number of parallel workers to use.
-
-    Returns:
-      Variant outputs for each DNA interval and variant pair.
-    """
-    if not isinstance(intervals, Sequence):
-      intervals = [intervals] * len(variants)
-    elif len(intervals) != len(variants):
-      raise ValueError(
-          'Intervals and variants must have the same length.'
-          f'Got {len(intervals)} intervals and {len(variants)} variants.'
-      )
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers
-    ) as executor:
-      futures = [
-          executor.submit(
-              self.predict_variant,
-              interval=interval,
-              variant=variant,
-              organism=organism,
-              ontology_terms=ontology_terms,
-              requested_outputs=requested_outputs,
-          )
-          for interval, variant in zip(intervals, variants, strict=True)
-      ]
-      futures_as_completed = tqdm.auto.tqdm(
-          concurrent.futures.as_completed(futures),
-          total=len(futures),
-          disable=not progress_bar,
-      )
-      for future in futures_as_completed:
-        if (exception := future.exception()) is not None:
-          executor.shutdown(wait=False, cancel_futures=True)
-          raise exception
-
-      return [future.result() for future in futures]
 
   @retry_rpc
   def score_interval(
@@ -891,55 +712,6 @@ class DnaClient:
     for ix in range(len(interval_scorers)):
       interval_outputs[ix].uns['interval_scorer'] = interval_scorers[ix]
     return interval_outputs
-
-  def score_intervals(
-      self,
-      intervals: Sequence[genome.Interval],
-      interval_scorers: Sequence[interval_scorers_lib.IntervalScorerTypes] = (),
-      *,
-      organism: Organism = Organism.HOMO_SAPIENS,
-      progress_bar: bool = True,
-      max_workers: int = _DEFAULT_MAX_WORKERS,
-  ) -> list[list[anndata.AnnData]]:
-    """Generate interval scores for a sequence of intervals.
-
-    Args:
-      intervals: Sequence of DNA intervals to make prediction for.
-      interval_scorers: Sequence of interval scorers to use for scoring. If no
-        interval scorers are provided, the recommended interval scorers for the
-        organism will be used.
-      organism: Organism to use for the prediction.
-      progress_bar: If True, show a progress bar.
-      max_workers: Number of parallel workers to use.
-
-    Returns:
-      List of `AnnData` lists corresponding to score_interval
-      outputs for each interval.
-    """
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers
-    ) as executor:
-      futures = [
-          executor.submit(
-              self.score_interval,
-              interval=interval,
-              interval_scorers=interval_scorers,
-              organism=organism,
-          )
-          for interval in intervals
-      ]
-      futures_as_completed = tqdm.auto.tqdm(
-          concurrent.futures.as_completed(futures),
-          total=len(futures),
-          disable=not progress_bar,
-      )
-      for future in futures_as_completed:
-        if (exception := future.exception()) is not None:
-          executor.shutdown(wait=False, cancel_futures=True)
-          raise exception
-
-      results = [future.result() for future in futures]
-    return results
 
   @retry_rpc
   def score_variant(
@@ -1007,65 +779,6 @@ class DnaClient:
       variant_outputs[ix].uns['variant_scorer'] = variant_scorers[ix]
     return variant_outputs
 
-  def score_variants(
-      self,
-      intervals: genome.Interval | Sequence[genome.Interval],
-      variants: Sequence[genome.Variant],
-      variant_scorers: Sequence[variant_scorers_lib.VariantScorerTypes] = (),
-      *,
-      organism: Organism = Organism.HOMO_SAPIENS,
-      progress_bar: bool = True,
-      max_workers: int = _DEFAULT_MAX_WORKERS,
-  ) -> list[list[anndata.AnnData]]:
-    """Generate variant scores for a sequence of variants.
-
-    Args:
-      intervals: DNA interval(s) to make prediction for. If a single interval is
-        provided, then the same interval will be used for all variants.
-      variants: Sequence of DNA variants to make prediction for.
-      variant_scorers: Sequence of variant scorers to use for scoring. If no
-        variant scorers are provided, the recommended variant scorers for the
-        organism will be used.
-      organism: Organism to use for the prediction.
-      progress_bar: If True, show a progress bar.
-      max_workers: Number of parallel workers to use.
-
-    Returns:
-      List of `AnnData` lists corresponding to score_variant outputs for each
-      variant.
-    """
-    if not isinstance(intervals, Sequence):
-      intervals = [intervals] * len(variants)
-    if len(intervals) != len(variants):
-      raise ValueError(
-          'Intervals and variants must have the same length.'
-          f'Got {len(intervals)} intervals and {len(variants)} variants.'
-      )
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers
-    ) as executor:
-      futures = [
-          executor.submit(
-              self.score_variant,
-              interval=interval,
-              variant=variant,
-              variant_scorers=variant_scorers,
-              organism=organism,
-          )
-          for interval, variant in zip(intervals, variants, strict=True)
-      ]
-      futures_as_completed = tqdm.auto.tqdm(
-          concurrent.futures.as_completed(futures),
-          total=len(futures),
-          disable=not progress_bar,
-      )
-      for future in futures_as_completed:
-        if (exception := future.exception()) is not None:
-          executor.shutdown(wait=False, cancel_futures=True)
-          raise exception
-
-      return [future.result() for future in futures]
-
   def score_ism_variants(
       self,
       interval: genome.Interval,
@@ -1074,7 +787,7 @@ class DnaClient:
       *,
       organism: Organism = Organism.HOMO_SAPIENS,
       progress_bar: bool = True,
-      max_workers: int = _DEFAULT_MAX_WORKERS,
+      max_workers: int = dna_model.DEFAULT_MAX_WORKERS,
   ) -> list[list[anndata.AnnData]]:
     """Generate in-silico mutagenesis (ISM) variant scores for a given interval.
 
