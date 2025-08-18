@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0]
+
+### Added
+
+-   Add `is_insertion` and `is_deletion` properties to `Variant`.
+-   Add `DnaModel` abstract base class.
+-   Add support for center mask scoring over the entire sequence by passing
+    `None` for width.
+
+### Changed
+
+-   Move RPC requests and responses to `dna_model_service.proto`.
+-   Move functionality to convert `TrackData` to/from protocol buffers to
+    utility module.
+
 ## [0.1.0]
 
 ### Added
