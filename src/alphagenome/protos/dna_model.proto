@@ -295,7 +295,7 @@ message IntervalScorer {
 // Variant scorer message for center mask scoring.
 message CenterMaskScorer {
   // The width of the mask around the variant.
-  int64 width = 1;
+  optional int64 width = 1;
 
   // The aggregation type.
   AggregationType aggregation_type = 2;

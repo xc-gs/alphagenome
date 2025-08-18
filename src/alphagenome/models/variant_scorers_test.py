@@ -65,6 +65,15 @@ class VariantScorersTest(parameterized.TestCase):
             )
         ),
         dna_model_pb2.VariantScorer(
+            center_mask=dna_model_pb2.CenterMaskScorer(
+                width=None,
+                aggregation_type=(
+                    dna_model_pb2.AggregationType.AGGREGATION_TYPE_DIFF_LOG2_SUM
+                ),
+                requested_output=dna_model_pb2.OUTPUT_TYPE_ATAC,
+            )
+        ),
+        dna_model_pb2.VariantScorer(
             gene_mask=dna_model_pb2.GeneMaskLFCScorer(
                 requested_output=dna_model_pb2.OUTPUT_TYPE_RNA_SEQ,
             )
@@ -92,6 +101,11 @@ class VariantScorersTest(parameterized.TestCase):
             width=10_001,
             aggregation_type=(variant_scorers.AggregationType.ACTIVE_MEAN),
             requested_output=dna_output.OutputType.PROCAP,
+        ),
+        variant_scorers.CenterMaskScorer(
+            width=None,
+            aggregation_type=(variant_scorers.AggregationType.DIFF_LOG2_SUM),
+            requested_output=dna_output.OutputType.ATAC,
         ),
         variant_scorers.GeneMaskLFCScorer(
             requested_output=dna_output.OutputType.RNA_SEQ,

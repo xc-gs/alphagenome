@@ -138,8 +138,8 @@ SUPPORTED_OUTPUT_TYPES = immutabledict.immutabledict({
 })
 
 SUPPORTED_WIDTHS = immutabledict.immutabledict({
-    BaseVariantScorer.CENTER_MASK: [501, 2001, 10_001, 100_001, 200_001],
-    BaseVariantScorer.GENE_MASK_SPLICING: [101, 1_001, 10_001, None],
+    BaseVariantScorer.CENTER_MASK: [None, 501, 2001, 10_001, 100_001, 200_001],
+    BaseVariantScorer.GENE_MASK_SPLICING: [None, 101, 1_001, 10_001],
 })
 
 SUPPORTED_AGGREGATIONS = immutabledict.immutabledict({
@@ -166,7 +166,8 @@ class CenterMaskScorer:
 
   Attributes:
     requested_output: The requested output type (e.g., ATAC, DNASE, etc.)
-    width: The width of the mask around the variant.
+    width: The width of the mask around the variant. If None, the score is
+      computed over the entire sequence.
     aggregation_type: The aggregation type.
     base_variant_scorer: The base variant scorer.
     name: The name of the scorer (a composite of the above attributes that
@@ -183,7 +184,7 @@ class CenterMaskScorer:
   """
 
   requested_output: dna_output.OutputType
-  width: int
+  width: int | None
   aggregation_type: AggregationType
 
   @property
