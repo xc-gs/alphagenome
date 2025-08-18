@@ -29,6 +29,7 @@ from alphagenome.data import track_data
 from alphagenome.interpretation import ism
 from alphagenome.models import dna_client
 from alphagenome.models import interval_scorers
+from alphagenome.models import track_data_utils
 from alphagenome.models import variant_scorers
 from alphagenome.protos import dna_model_pb2
 from alphagenome.protos import dna_model_service_pb2
@@ -60,7 +61,9 @@ def _generate_prediction_protos(
     prediction = predictions.get(dna_client.OutputType(output_type))
     if prediction is not None:
       if isinstance(prediction, track_data.TrackData):
-        proto, chunks = prediction.to_protos(bytes_per_chunk=bytes_per_chunk)
+        proto, chunks = track_data_utils.to_protos(
+            prediction, bytes_per_chunk=bytes_per_chunk
+        )
         yield response_proto_type(
             output=dna_model_pb2.Output(
                 output_type=output_type, track_data=proto
@@ -90,7 +93,9 @@ def _generate_variant_protos(
     prediction = predictions.reference.get(dna_client.OutputType(output_type))
     if prediction is not None:
       if isinstance(prediction, track_data.TrackData):
-        proto, chunks = prediction.to_protos(bytes_per_chunk=bytes_per_chunk)
+        proto, chunks = track_data_utils.to_protos(
+            prediction, bytes_per_chunk=bytes_per_chunk
+        )
         yield dna_model_service_pb2.PredictVariantResponse(
             reference_output=dna_model_pb2.Output(
                 output_type=output_type, track_data=proto
@@ -113,7 +118,9 @@ def _generate_variant_protos(
     prediction = predictions.alternate.get(dna_client.OutputType(output_type))
     if prediction is not None:
       if isinstance(prediction, track_data.TrackData):
-        proto, chunks = prediction.to_protos(bytes_per_chunk=bytes_per_chunk)
+        proto, chunks = track_data_utils.to_protos(
+            prediction, bytes_per_chunk=bytes_per_chunk
+        )
         yield dna_model_service_pb2.PredictVariantResponse(
             alternate_output=dna_model_pb2.Output(
                 output_type=output_type, track_data=proto

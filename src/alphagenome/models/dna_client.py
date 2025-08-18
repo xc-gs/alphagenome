@@ -30,6 +30,7 @@ from alphagenome.data import track_data
 from alphagenome.models import dna_model
 from alphagenome.models import dna_output
 from alphagenome.models import interval_scorers as interval_scorers_lib
+from alphagenome.models import track_data_utils
 from alphagenome.models import variant_scorers as variant_scorers_lib
 from alphagenome.protos import dna_model_pb2
 from alphagenome.protos import dna_model_service_pb2
@@ -192,7 +193,7 @@ def _make_output_data(
   """Helper to create an output data object from an output proto."""
   match output.WhichOneof('payload'):
     case 'track_data':
-      return track_data.from_protos(
+      return track_data_utils.from_protos(
           output.track_data,
           _read_tensor_chunks(responses, output.track_data.values.chunk_count),
           interval=interval,
@@ -224,8 +225,8 @@ def construct_output_metadata(
     for metadata_proto in response.output_metadata:
       match metadata_proto.WhichOneof('payload'):
         case 'tracks':
-          metadata[metadata_proto.output_type] = track_data.metadata_from_proto(
-              metadata_proto.tracks
+          metadata[metadata_proto.output_type] = (
+              track_data_utils.metadata_from_proto(metadata_proto.tracks)
           )
         case 'junctions':
           metadata[metadata_proto.output_type] = (
@@ -369,7 +370,7 @@ def _construct_anndata_from_proto(
     obs = pd.DataFrame(metadata)
     obs.index = obs.index.map(str)
 
-  var = track_data.metadata_from_proto(
+  var = track_data_utils.metadata_from_proto(
       dna_model_pb2.TracksMetadata(metadata=track_metadata)
   )
   var.index = var.index.map(str)
