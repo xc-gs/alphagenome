@@ -49,7 +49,7 @@ Each row of the {class}`~pandas.DataFrame` corresponds to a ‘track’, and eac
 column contains key information for biological interpretation such as:
 
 *   `name`: Name of the track. Example: `CL:0000047 polyA plus RNA-seq`.
-*   `strand` Strand of the track, either positive (`+`), negative (`+`), or
+*   `strand` Strand of the track, either positive (`+`), negative (`-`), or
     unstranded (`.`).
 *   `ontology_curie`: A string ID representing the ontology term corresponding
     to the biosample. Example: `CL:0000100`.
