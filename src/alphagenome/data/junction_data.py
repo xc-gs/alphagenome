@@ -273,6 +273,8 @@ def metadata_to_proto(
       metadata.get('biosample_name', default_values),
       metadata.get('biosample_life_stage', default_values),
       metadata.get('gtex_tissue', default_values),
+      metadata.get('data_source', default_values),
+      metadata.get('Assay title', default_values),
       strict=True,
   )
 
@@ -285,6 +287,8 @@ def metadata_to_proto(
       biosample_name,
       biosample_life_stage,
       gtex_tissue,
+      data_source,
+      assay,
   ) in columns:
     if biosample_type is not None:
       biosample_proto = dna_model_pb2.Biosample(
@@ -305,6 +309,8 @@ def metadata_to_proto(
             else None,
             biosample=biosample_proto,
             gtex_tissue=gtex_tissue,
+            data_source=data_source,
+            assay=assay,
         )
     )
 
@@ -343,6 +349,12 @@ def metadata_from_proto(
 
     if junction_proto.HasField('gtex_tissue'):
       junction_metadata['gtex_tissue'] = junction_proto.gtex_tissue
+
+    if junction_proto.HasField('data_source'):
+      junction_metadata['data_source'] = junction_proto.data_source
+
+    if junction_proto.HasField('assay'):
+      junction_metadata['Assay title'] = junction_proto.assay
 
     metadata.append(junction_metadata)
 

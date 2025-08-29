@@ -156,6 +156,12 @@ message JunctionMetadata {
 
   // Optional GTEx tissue for the junction track.
   optional string gtex_tissue = 4;
+
+  // Optional data source for the track. e.g. "encode".
+  optional string data_source = 5;
+
+  // Optional assay for the track. e.g. "polyA plus RNA-seq".
+  optional string assay = 6;
 }
 
 // Container for list of JunctionMetadata.

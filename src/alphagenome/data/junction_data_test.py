@@ -54,6 +54,8 @@ class JunctionDataTest(parameterized.TestCase):
         'biosample_name': ['Liver', 'Kidney'],
         'biosample_type': ['tissue', 'cell_line'],
         'gtex_tissue': ['liver', 'kidney'],
+        'data_source': ['encode', 'encode'],
+        'Assay title': ['polyA plus RNA-seq', 'polyA plus RNA-seq'],
     })
     values = np.arange(8).reshape((4, 2)).astype(np.float32)
     junctions = junction_data.JunctionData(
