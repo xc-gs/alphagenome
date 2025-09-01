@@ -53,6 +53,7 @@ class JunctionDataTest(parameterized.TestCase):
         'ontology_curie': ['UBERON:0000005', 'UBERON:0000006'],
         'biosample_name': ['Liver', 'Kidney'],
         'biosample_type': ['tissue', 'cell_line'],
+        'biosample_life_stage': ['adult', 'adult'],
         'gtex_tissue': ['liver', 'kidney'],
         'data_source': ['encode', 'encode'],
         'Assay title': ['polyA plus RNA-seq', 'polyA plus RNA-seq'],

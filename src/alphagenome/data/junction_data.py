@@ -346,6 +346,10 @@ def metadata_from_proto(
           .removeprefix('BIOSAMPLE_TYPE_')
           .lower()
       )
+      if junction_proto.biosample.HasField('stage'):
+        junction_metadata['biosample_life_stage'] = (
+            junction_proto.biosample.stage
+        )
 
     if junction_proto.HasField('gtex_tissue'):
       junction_metadata['gtex_tissue'] = junction_proto.gtex_tissue
