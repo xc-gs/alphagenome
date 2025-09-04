@@ -30,6 +30,7 @@ from alphagenome.data import track_data
 from alphagenome.models import dna_model
 from alphagenome.models import dna_output
 from alphagenome.models import interval_scorers as interval_scorers_lib
+from alphagenome.models import junction_data_utils
 from alphagenome.models import track_data_utils
 from alphagenome.models import variant_scorers as variant_scorers_lib
 from alphagenome.protos import dna_model_pb2
@@ -203,7 +204,7 @@ def _make_output_data(
       values = tensor_utils.unpack_proto(output.data, chunks)
       return tensor_utils.upcast_floating(values)
     case 'junction_data':
-      return junction_data.from_protos(
+      return junction_data_utils.from_protos(
           output.junction_data,
           _read_tensor_chunks(
               responses, output.junction_data.values.chunk_count
@@ -230,7 +231,7 @@ def construct_output_metadata(
           )
         case 'junctions':
           metadata[metadata_proto.output_type] = (
-              junction_data.metadata_from_proto(metadata_proto.junctions)
+              junction_data_utils.metadata_from_proto(metadata_proto.junctions)
           )
         case _:
           raise ValueError(

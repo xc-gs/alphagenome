@@ -40,50 +40,6 @@ class JunctionDataTest(parameterized.TestCase):
         junction_data.JunctionData, self._assert_junction_data_equal
     )
 
-  @parameterized.parameters([None, genome.Interval('chr1', 0, 100)])
-  def test_proto_roundtrip(self, interval: genome.Interval | None):
-    junctions = np.array([
-        genome.Interval('chr1', 10, 11, '+'),
-        genome.Interval('chr1', 10, 11, '+'),
-        genome.Interval('chr1', 10, 11, '-'),
-        genome.Interval('chr1', 10, 11, '-'),
-    ])
-    metadata = pd.DataFrame({
-        'name': ['foo', 'bar'],
-        'ontology_curie': ['UBERON:0000005', 'UBERON:0000006'],
-        'biosample_name': ['Liver', 'Kidney'],
-        'biosample_type': ['tissue', 'cell_line'],
-        'biosample_life_stage': ['adult', 'adult'],
-        'gtex_tissue': ['liver', 'kidney'],
-        'data_source': ['encode', 'encode'],
-        'Assay title': ['polyA plus RNA-seq', 'polyA plus RNA-seq'],
-    })
-    values = np.arange(8).reshape((4, 2)).astype(np.float32)
-    junctions = junction_data.JunctionData(
-        junctions, values, metadata, interval
-    )
-    proto, chunks = junctions.to_protos()
-    round_trip = junction_data.from_protos(proto, chunks)
-    self.assertEqual(junctions, round_trip)
-
-  def test_from_protos_with_interval(self):
-    metadata = pd.DataFrame({
-        'name': ['foo', 'bar'],
-        'ontology_curie': ['UBERON:0000005', 'UBERON:0000006'],
-    })
-    junctions = np.array([
-        genome.Interval('chr1', 10, 11, '+'),
-        genome.Interval('chr1', 10, 11, '-'),
-    ])
-    values = np.arange(4).reshape((2, 2)).astype(np.float32)
-    proto, chunks = junction_data.JunctionData(
-        junctions, values, metadata
-    ).to_protos()
-    interval = genome.Interval('chr1', 0, 100)
-    round_trip = junction_data.from_protos(proto, chunks, interval=interval)
-    expected = junction_data.JunctionData(junctions, values, metadata, interval)
-    self.assertEqual(round_trip, expected)
-
   def test_invalid_metadata_raises(self):
     metadata = pd.DataFrame({'name': ['foo', 'bar', 'baz']})
     junctions = np.array([
