@@ -21,7 +21,7 @@ import dataclasses
 import enum
 import re
 import sys
-from typing import Any
+from typing import Any, Protocol
 
 from alphagenome.protos import dna_model_pb2
 import numpy as np
@@ -914,6 +914,85 @@ class Junction(Interval):
     return Interval(
         self.chromosome, self.donor, self.donor, strand=self.strand
     ).pad(start_pad=overhang[0], end_pad=overhang[1])
+
+
+class _FastaExtractorType(Protocol):
+  """Protocol definition for extracting intervals from a Fasta file."""
+
+  def extract(self, interval: Interval) -> str:
+    """Extract and return the DNA sequence for a given interval."""
+
+
+def _prefix_length(*sequences) -> int:
+  """Returns the length of the common prefix for a sequence of strings."""
+  i = 0
+  for chars in zip(*sequences, strict=False):
+    if all(c == chars[0] for c in chars):
+      i += 1
+    else:
+      break
+  return i
+
+
+def normalize_variant(
+    variant: Variant, extractor: _FastaExtractorType
+) -> Variant:
+  """Normalize a Variant by left-aligning the reference and alternate bases.
+
+  Normalization applied following algorithm described in
+  https://doi.org/10.1093/bioinformatics/btv112.
+
+  Args:
+    variant: The Variant to normalize.
+    extractor: The FastaExtractor to use for extracting the reference sequence.
+
+  Returns:
+    The normalized Variant.
+  """
+  if variant.is_snv:
+    return variant
+
+  chromosome = variant.chromosome
+  genome_sequence = extractor.extract(
+      Interval(
+          chromosome,
+          variant.start,
+          variant.start
+          + max(len(variant.reference_bases), len(variant.alternate_bases)),
+      )
+  )
+
+  position = variant.position
+  alleles = [genome_sequence, variant.reference_bases, variant.alternate_bases]
+
+  # Remove any common suffix from the alleles.
+  finished = False
+  while not finished:
+    suffix_length = _prefix_length(*[reversed(a) for a in alleles])
+    if suffix_length > 0:
+      alleles = [a[:-suffix_length] for a in alleles]
+
+    # If any alleles are empty, extend all alleles by 1 nucleotide to the left.
+    if not all(alleles):
+      position -= 1
+      base = extractor.extract(Interval(chromosome, position - 1, position))[0]
+      alleles = [base + a for a in alleles]
+    else:
+      # Finished iff we haven't shifted alleles and don't have a common suffix.
+      finished = suffix_length == 0
+
+  # Left-align the variant to the genome, ensuring at least 1 bp of context.
+  max_prefix_length = len(min(alleles)) - 1
+  prefix_length = _prefix_length(*alleles)
+  i = min(max_prefix_length, prefix_length)
+
+  _, reference_bases, alternate_bases = alleles
+  return Variant(
+      chromosome=chromosome,
+      position=position + i,
+      reference_bases=reference_bases[i:],
+      alternate_bases=alternate_bases[i:],
+  )
 
 
 def _split_intervals(

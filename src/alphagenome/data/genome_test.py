@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest import mock
+
 from absl.testing import absltest
 from absl.testing import parameterized
-from alphagenome.data import genome
 from alphagenome.protos import dna_model_pb2
+from alphagenome.data import genome
 import numpy as np
 
 
@@ -778,6 +780,36 @@ class VariantTest(parameterized.TestCase):
   def test_is_insertion(self, ref, alt, expected):
     v = genome.Variant('chr1', 10, ref, alt)
     self.assertEqual(v.is_insertion, expected)
+
+  @parameterized.parameters(
+      ('chr1:1:AAA>GGG', 'TTTNNNN', 'chr1:1:AAA>GGG'),
+      ('chr1:1:ATCG>ATCC', 'ATCGNNN', 'chr1:4:G>C'),
+      ('chr1:1:ATCG>ATC', 'ATCG', 'chr1:3:CG>C'),
+      ('chr1:1:ACTG>GGTG', 'NNNN', 'chr1:1:ACTG>GGTG'),
+      ('chr1:1:C>AAA', 'CCC', 'chr1:1:C>AAA'),
+      ('chr1:5:C>', 'AAAAA', 'chr1:4:AC>A'),
+      ('chr1:2:A>A', 'AAAAAA', 'chr1:2:A>A'),
+      ('chr1:1:GAT>GT', 'GAT', 'chr1:1:GA>G'),
+      ('chr1:1:GAT>GT', 'GAN', 'chr1:2:AT>T'),
+      # Examples from paper.
+      ('chr1:6:CAC>C', 'GGGCACACACAGGG', 'chr1:3:GCA>G'),
+      ('chr2:3:GCACA>GCA', 'GGGCACACACAGGG', 'chr2:3:GCA>G'),
+      ('chr3:2:GGCA>GG', 'GGGCACACACAGGG', 'chr3:3:GCA>G'),
+      ('chr4:3:GCA>G', 'GGGCACACACAGGG', 'chr4:3:GCA>G'),
+  )
+  def test_normalize_variant(
+      self, variant: str, reference_sequence: str, expected: str
+  ):
+    mock_extractor = mock.create_autospec(genome._FastaExtractorType)  # pylint: disable=protected-access
+    variant = genome.Variant.from_str(variant)
+
+    def _extract(interval):
+      return reference_sequence[interval.start : interval.end]
+
+    mock_extractor.extract.side_effect = _extract
+
+    result = genome.normalize_variant(variant, mock_extractor)
+    self.assertEqual(str(result), expected)
 
 
 class JunctionTest(parameterized.TestCase):
