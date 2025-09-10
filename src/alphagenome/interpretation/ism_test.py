@@ -160,6 +160,15 @@ class IsmTest(parameterized.TestCase):
           multiply_by_sequence=False,
       )
 
+    output = ism.ism_matrix(
+        variant_scores=[1] * len(variants),
+        variants=variants,
+        interval=genome.Interval('chr1', 1, 4),
+        multiply_by_sequence=False,
+        require_fully_filled=False,
+    )
+    np.testing.assert_array_equal(output[-1], 0)
+
 
 if __name__ == '__main__':
   absltest.main()

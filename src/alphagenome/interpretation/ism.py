@@ -65,6 +65,7 @@ def ism_matrix(
     interval: genome.Interval | None = None,
     multiply_by_sequence: bool = True,
     vocabulary: str = 'ACGT',
+    require_fully_filled: bool = True,
 ) -> np.ndarray:
   """Construct the ISM (position, base) matrix from individual ISM scores.
 
@@ -85,6 +86,8 @@ def ism_matrix(
       one-hot-encoded reference genome sequence bases.
     vocabulary: Vocabulary of possible alternative bases contained in
       `sequence`. The order determines the column order of the returned matrix.
+    require_fully_filled: If True, raise an error if not all positions are
+      covered by variants.
 
   Returns:
     Matrix of shape (interval.width, 4) containing variant scores.
@@ -114,7 +117,7 @@ def ism_matrix(
     filled[position, base_index[variant.alternate_bases]] = True
 
   # Check that all positions were covered by variants.
-  if (filled.sum(axis=-1) == 0).any():
+  if (filled.sum(axis=-1) == 0).any() and require_fully_filled:
     missing_positions = list(
         np.where(filled.sum(axis=-1) == 0)[0] + interval.start + 1
     )
@@ -131,7 +134,7 @@ def ism_matrix(
         ' position instead of 3. List of positions on chromosome '
         f'{interval.chromosome}: {full_positions}'
     )
-  elif (filled.sum(axis=-1) != 3).any():
+  elif (filled.sum(axis=-1) != 3).any() and require_fully_filled:
     missing_positions = list(
         np.where(filled.sum(axis=-1) != 3)[0] + interval.start + 1
     )
@@ -141,7 +144,7 @@ def ism_matrix(
         f'{interval.chromosome}: {missing_positions}'
     )
 
-  scores -= np.mean(scores, axis=-1, where=filled, keepdims=True)
+  scores -= np.sum(scores, axis=-1, keepdims=True) / (len(vocabulary) - 1)
   if multiply_by_sequence:
     scores = scores * (~filled)
   return scores
